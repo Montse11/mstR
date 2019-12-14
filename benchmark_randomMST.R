@@ -1,21 +1,27 @@
 
 #Install package
-
-#install.packages("C:/Users/monts/Box Sync/DIF in MST/Simulation MST/mstRforLR/v1.2/mstRforLR_1.2.zip", repos = NULL, type = "win.binary")
+path <- getwd()
+setwd(paste0(path, "/mstR"))
+source("randomMstmv.R")
+#source("randomMstmv1.R")
+#source("randomMstmv2.R")
+install.packages("mstRforLR_1.2.zip", repos = NULL, type = "win.binary")
 library(mstRforLR) 
-#install.packages("R.utils")
+install.packages("R.utils")
 library(R.utils)
+install.packages("profvis")
+library(profvis)
 #################################################################################
 #                                 Data call                                     #
 #################################################################################
 #Set pathway 
-path <- "C:/Users/monts/Box Sync/DIF in MST/Simulation MST/Data"
-setwd(path)
+#path <- "C:/Users/monts/Box Sync/DIF in MST/Simulation MST/Data"
+#setwd(path)
 
 
 # Call true item parameters
-itempar = read.csv("Test assemble/core.test.25.csv", header = T)
-itembank = read.csv("item bank for modules.csv", header = T)
+itempar = read.csv("core.test.25.csv", header = T) #Test assemble/core.test.25.csv", header = T)
+itembank = read.csv("item_bank_for_modules.csv", header = T)
 Slope = itembank[, 4]
 Location = itempar[, 3] # this is for selecting the DIF introduced to only 11%
 it1 = data.frame(Slope, Location)
@@ -56,22 +62,17 @@ plot.mst(trans)
 # List for estimation of  theta
 
 start<- list(fixModule = 1)
-test1 <- list(moduleSelect="MFI", method = "EAP",  prob=c(1), set.seed)
+test1 <- list(moduleSelect="MFI", method = "EAP",  prob=c(1))#, set.seed)
 final<- list(method = "EAP")
 
 #==================================================================
 # First try to randomMST
 #==================================================================
 
-## Time
-ptm <- proc.time()
-res1 <- randomMST(trueTheta = .99, itemBank = it, modules = modules, transMatrix = trans,
-                  start = start, test = test1, final = final, allTheta = TRUE)
-proc.time( ) - ptm
-#res1$testItems
-microbenchmark::microbenchmark(
+
+#Using microbenchmark in a smaller function
 res1 <- randomMSTmv(trueTheta = .99, itemBank = it, modules = modules, transMatrix = trans,
-                    start = start, test = test1, final = final, allTheta = TRUE))
+                      start = start, test = test1, final = final, allTheta = TRUE)
 res1$selected.modules
 res1$thetaProv
 res1$seProv
@@ -91,9 +92,7 @@ res1$thFinal
 #                    ROUTING PROBABILITY = 1
 #===============================================================================
 ## Time
-ptm <- proc.time()
-
-path <- "C:/Users/monts/Desktop/mstR/Results/"
+path <- getwd() #"C:/Users/monts/Desktop/mstR/Results/"
 
 Ntheta = 1000
 NoReps <- c(10)
@@ -118,36 +117,34 @@ data <- data.frame(data,
 
 
 # MST loop 
-
-for (i in 1:1){ 
-  set.seed(i*1992)
-  th <- theta[[i]] <- c(rnorm(Ntheta, mean= -1.16, sd = .80 ), 
-                        rnorm(Ntheta, mean= -1.28, sd = .87),
-                        rnorm(Ntheta, mean= -1.32, sd = .86)) 
-  ressim <- NULL
-  for (k in 1:NoReps[1]){
-    test2 <- list(method = "EAP", moduleSelect= "MFI", prob=c(1), seed.prob = (i*k+47405))
+profvis({
+  for (i in 1:1){ 
+    set.seed(i*1992)
+    th <- theta[[i]] <- c(rnorm(Ntheta, mean= -1.16, sd = .80 ), 
+                          rnorm(Ntheta, mean= -1.28, sd = .87),
+                          rnorm(Ntheta, mean= -1.32, sd = .86)) 
+    ressim <- NULL
+    for (k in 1:NoReps[1]){
+      test2 <- list(method = "EAP", moduleSelect= "MFI", prob=c(1), seed.prob = (i*k+47405))
+      
+      res2 <- randomMSTmv(trueTheta = th[k], itemBank = it, modules = modules, transMatrix = trans,
+                           start = start, 
+                           test = test2, 
+                           final = final)
+      
+      data[k, c("rep")] <- i
+      data[k, c("TH0")] <- res2$trueTheta
+      data[k, paste0("i.", c(res2$testItems)) ] <- res2$pattern
+      data[k, c("OP1", "OP2")] <- res2$best.module
+      data[k, c("MOD1", "MOD2", "MOD3")] <- res2$selected.modules
+      data[k, c("th1", "th2", "th3")] <- res2$thetaProv
+      data[k, c("seT")] <- res2$seFinal
+      data[k, c("set1", "set2", "set3")] <- res2$seProv
+      #ressim = cbind(res, data)
+    }
+    saveObject(data, file = paste0(path, "Core.25.11.p1", "_i", i, ".Rbin"))
     
-    res2 <- randomMST(trueTheta = th[k], itemBank = it, modules = modules, transMatrix = trans,
-                      start = start, 
-                      test = test2, 
-                      final = final)
-    
-    data[k, c("rep")] <- i
-    data[k, c("TH0")] <- res2$trueTheta
-    data[k, paste0("i.", c(res2$testItems)) ] <- res2$pattern
-    data[k, c("OP1", "OP2")] <- res2$best.module
-    data[k, c("MOD1", "MOD2", "MOD3")] <- res2$selected.modules
-    data[k, c("th1", "th2", "th3")] <- res2$thetaProv
-    data[k, c("seT")] <- res2$seFinal
-    data[k, c("set1", "set2", "set3")] <- res2$seProv
-    #ressim = cbind(res, data)
   }
-  saveObject(data, file = paste0(path, "Core.25.11.p1", "_i", i, ".Rbin"))
-  
-}
-
-#Stop the clock
-proc.time( ) - ptm
+}) #closing the profvis
 
 
