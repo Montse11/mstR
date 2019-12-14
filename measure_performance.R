@@ -1,8 +1,9 @@
 # Measuring performance
-
-install.packages("profvis")
+path <- getwd()
+setwd(paste0(path, "/mstR"))
+#Call packages
+#install.packages("profvis")
 library(profvis)
-setwd("C:/Users/monts/Desktop/mstR/")
 source("benchmark_randomMST.R")
 
 profvis({
@@ -15,7 +16,7 @@ profvis({
     for (k in 1:NoReps[1]){
       test2 <- list(method = "EAP", moduleSelect= "MFI", prob=c(1), seed.prob = (i*k+47405))
       
-      res2 <- randomMST(trueTheta = th[k], itemBank = it, modules = modules, transMatrix = trans,
+      res2 <- randomMSTmv1(trueTheta = th[k], itemBank = it, modules = modules, transMatrix = trans,
                         start = start, 
                         test = test2, 
                         final = final)
