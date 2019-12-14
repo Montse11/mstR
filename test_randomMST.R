@@ -1,6 +1,6 @@
 # Testing if it produces the same output 
-
-setwd("C:/Users/monts/Desktop/mstR/")
+path <- getwd()
+setwd(paste0(path, "/mstR"))
 source("benchmark_randomMST.R")
 source("randomMSTmv.R")
 

@@ -1,8 +1,9 @@
 # Measuring performance
-
+path <- getwd()
+setwd(paste0(path, "/mstR"))
+#Call packages
 install.packages("profvis")
 library(profvis)
-setwd("C:/Users/monts/Desktop/mstR/")
 source("benchmark_randomMST.R")
 
 profvis({
