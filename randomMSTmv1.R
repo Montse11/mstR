@@ -97,8 +97,8 @@ randomMSTmv1 = function (trueTheta = NULL,
     #pr0 <- startModule(itemBank = itemBank, modules = modules, 
     #                   transMatrix = transMatrix, model = model, fixModule = start$fixModule, 
     #                   seed = start$seed, theta = start$theta, D = start$D)
-    pr0 <- startModule(itemBank = it1, modules = modules, 
-                       transMatrix = trans, model = model, fixModule = start$fixModule, 
+    pr0 <- startModule(itemBank = itemBank, modules = modules, 
+                       transMatrix = transMatrix, model = model, fixModule = start$fixModule, 
                        seed = start$seed, theta = start$theta, D = start$D)
     ITEMS <- pr0$items
     ITEMS.PER.MOD <- length(ITEMS)
